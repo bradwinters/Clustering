@@ -29,7 +29,7 @@ def main():
            #Datapoints assigned to center now
            # Save distance, Center point and Data point
            #print("Decided  on ",MinD," Data to Center ",i,thisCenter)
-           bCntr.append((MinD,thisCenter,i))
+           bCntr.append((thisCenter,i,MinD))
            MinD=100000.0
            #bCntr.append((xy,j,i))
         return bCntr 
@@ -91,35 +91,35 @@ def main():
     
     print("Heres the Data")
     print(Data)
-    exit()
-    Kcntr=1
-    while Kcntr < K:
-        newC=ClosestCenter(a,Centers)
-    
-        qq=max(newC)    
-        Kcntr+=1
-        Centers = np.vstack((Centers,qq[2]))
-        a=np.delete(a,qq[2],0)
-    
-    #print("Final Distance is ",qq[0])
-    #print("Final Center is ",qq[1])
-    #print("Final Data Pt is ",qq[2])
 
-    #print("The centers are ",Centers)
-    Carray=list(Centers)
-    for row in Carray:
+    ss=ClosestCenter(Data,Centers)
+    print("==============")
+
+    d={}
+    for row in ss:
+       print("Center=>",row[0],"Pt : ",row[1],"  Dist: %6.2f " % (row[2]))
+        
+       if tuple(row[0]) not in d:
+           d[tuple(row[0])]=float(row[2])
+       else:
+           d[tuple(row[0])]+=float(row[2])
+    print("==============")
+  
+    for row in d:
+        print(row, d[row]) 
+
+    print("+++++++++++++++++++++++++++++") 
+    planets=list(ss)
+    for row in planets:
        for element in row:
           print(element,end=' ')
        print('\n')
 
-    print("********************")
-    print("Centers is ",Centers)
-    print("Data is ",a)
-    
-    ss=ClosestCenter(a,Centers)
-    for row in ss:
-       print(row)
     #sed=Distortion(a,Centers)
+    x=50.02233433
+    print("Number: %4.2f " % (x)) 
+
+    exit() 
 
 if __name__ == "__main__":
     main()
