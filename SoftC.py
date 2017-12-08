@@ -63,7 +63,6 @@ def main():
            else:
                d[tuple(row[0])]+=math.pow(float(row[2]),2)
                dc[tuple(row[0])]+=1
-        print("Dictionary to accumulate dimensional sum and counts loaded")
   
         for row in d:
             Sumo+=d[row]
@@ -74,10 +73,15 @@ def main():
 
         return Distort 
 
+    def Print2D(Centers):
+        niceCenter=[]
+        for row in Centers:
+           for element in row:
+               print("%5.3f" % (element),end=" ") 
+           print()
+
     def ddelRow(Array2D,pattrn):
-        print("find and remove rows that match all",pattrn)
         mp=np.where(np.all(Array2D==pattrn,axis=1))
-        print("Found old center ",mp,", delete it.")
 
         for ii in mp:
            #print("---> remove positions ",ii)
@@ -106,9 +110,7 @@ def main():
         return bCntr 
 
     def delRow(Array2D,pattrn):
-        print("find and remove rows that match all",pattrn)
         mp=np.where(np.all(Array2D==pattrn,axis=1))
-        print("Found old center ",mp,", delete it.") 
     
         for ii in mp:
            #print("---> remove positions ",ii)
@@ -182,19 +184,20 @@ def main():
     Done=False
     oldDistortion=50000
     coa=0
+
     while Done==False:
         ############################################################
         #  Map centers to data pts, keep the distance as well
         #  Returns Array of 3 part tuple, (Center Array, DataPt Array and Dist)
         #  Centers to Clusters Phase
-        #  
+        #  Guess at Parameters to determine Hidden Vector 
 
         Center2PtDist=ClosestCenter(Data,Centers)
 
         #
         # extract tuples from the 3mer with additional index 
         # where first [] is row, second is the tuple 1 of 3
-        print(Center2PtDist[0][0],Center2PtDist[0][1],Center2PtDist[0][2])
+        #print(Center2PtDist[0][0],Center2PtDist[0][1],Center2PtDist[0][2])
         #  will show row 0, tuples 1 to 3
         #exit()
         ############################################################
@@ -213,25 +216,21 @@ def main():
         ##########################################################
         #Pick a new Center by gravity for each Center and its data pts
         #  Clusters to Centers Phase
-        #
+        #  Use current HiddenVector to calculate Parameters 
         ##########################################################
 
         Centers=Clusters2Centers(Centers,Center2PtDist)
+        coa+=1
 
         #  End Loop 
-        coa+=1
+
         if coa > 50:
-           print("Early termination fees, looop is",coa)
+           print("Exceeded 50 loops, increase or look for infinite loop. ",coa)
            exit()
     print("*******Final Centers is ****")
-    print("Loop count is ",coa)
-    print(Centers)
+    print("Iterations = ",coa)
 
-    niceCenter=[]
-    for row in Centers:
-       for element in row:
-           print("%5.3f" % (element),end=" ") 
-       print()
+    Print2D(Centers)
          
       #print("Center=>",row[0],"Pt : ",row[1],"  Dist: %6.2f " % (row[2]))
 if __name__ == "__main__":
