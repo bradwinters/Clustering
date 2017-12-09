@@ -87,6 +87,23 @@ def Print2D(Centers):
            print("%5.3f" % (element),end=" ") 
        print()
 
+def eStep(Data,Centerz,BetaF):
+    hMatrix=[]
+    thisCenter=5.0
+      
+    for i in Data:  # Calculate the distance from each point 
+       arow=[]
+       for j in Centerz:  # store it
+          xy=-1.0*BetaF*Edist(i,j)
+          Numerator=math.pow(math.e, xy)
+          Denominator=np.sum(Centerz)
+          fa=Numerator/Denominator
+          arow.append(fa)
+          #partitionFunction()       
+       hMatrix.append(arow)
+
+    return hMatrix 
+
 def ClosestCenter(Data,Centerz):
     MaxD=-100.0
     MinD=100000.0
@@ -137,8 +154,8 @@ def readData(px):
     Open hardcoded file, parse data anticipataed but may change
     Load just data into a numpy array, 
     '''
-    #f = open('wk2_1.dat', 'r') Smaller dataset 
-    f = open('wk2_2.dat', 'r')
+    f = open('wk2_1.dat', 'r')   #Smaller dataset 
+    #f = open('wk2_2.dat', 'r')  #Larger test dataset 
     cnt=0
     dataCnt=0
     Dataflag=False
@@ -218,24 +235,15 @@ def main():
         #  Guess at Parameters to determine Hidden Vector 
 
         Center2PtDist=ClosestCenter(Data,Centers)
+        print("=========================")
+        print(Center2PtDist)
+        print("=========================")
 
-        #Create HiddenVector
-        HiddenVector=[]
-        c=0
-        Posi=[]
-        for j in Centers:
-           Posi.append((c,j))
-           c+=1
-        rowCnt=0
-        for row in Center2PtDist: 
-           for crow in Posi:
-              print("does ",crow," match ",row)
-              if all(crow[1] == row[0]):
-                 print("Yes")
-                 print(crow[1]," matches ",row[0])
-                 HiddenVector.append(crow[0])
-           rowCnt+=1
-        print("HiddenVector size is ",len(HiddenVector)) 
+        #Create HiddenMatrix
+        HiddenMatrix=eStep(Data,Centers,Params.Beta)
+        print("=========================")
+        print(HiddenMatrix)
+        print("=========================")
         exit()
         cntr1=0
         #for row in Center2PtDist
