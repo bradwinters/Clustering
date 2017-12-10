@@ -91,13 +91,16 @@ def eStep(Data,Centerz,BetaF):
     hMatrix=[]
     thisCenter=5.0
       
-    for i in Data:  # Calculate the distance from each point 
+    for i in Centerz:  # Calculate the distance from each point 
        arow=[]
-       for j in Centerz:  # store it
+       for j in Data:  # store it
           xy=-1.0*BetaF*Edist(i,j)
-          Numerator=math.pow(math.e, xy)
-          Denominator=np.sum(Centerz)
-          fa=Numerator/Denominator
+          Force=math.pow(math.e, xy)
+          print("sum of centers is ",np.sum(i))
+          print("Force is ",Force)
+          Denominator=np.multiply(np.sum(j),Force)
+          
+          fa=Force/Denominator
           arow.append(fa)
           #partitionFunction()       
        hMatrix.append(arow)
@@ -233,17 +236,21 @@ def main():
         #  Returns Array of 3 part tuple, (Center Array, DataPt Array and Dist)
         #  Centers to Clusters Phase
         #  Guess at Parameters to determine Hidden Vector 
-
+        # 
         Center2PtDist=ClosestCenter(Data,Centers)
         print("=========================")
         print(Center2PtDist)
         print("=========================")
 
         #Create HiddenMatrix
+        #   E Step
         HiddenMatrix=eStep(Data,Centers,Params.Beta)
         print("=========================")
         print(HiddenMatrix)
         print("=========================")
+        xx=np.multiply(1,HiddenMatrix)
+        print("Heres HiddenMatrix times 1")
+        print(xx)
         exit()
         cntr1=0
         #for row in Center2PtDist
