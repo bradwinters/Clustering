@@ -17,6 +17,36 @@ Lloyd algorithm into a soft k-means clustering algorithm. This algorithm starts 
 Centers to Soft Clusters (E-step): After centers have been selected, assign each data point a “responsibility” value for each cluster, where higher values correspond to stronger cluster membership. 
 Soft Clusters to Centers (M-step): After data points have been assigned to soft clusters, compute new centers.
 '''
+
+def Mstep(pCenterz,pData,pHiddenMat):
+    print("Start Mstep")
+    #Numer = np.zeros((2), dtype=np.float)
+    Numer=[]
+
+    print("Types ",type(pCenterz),type(pData),type(pHiddenMat))  
+    npHiddenMat=np.array(pHiddenMat)
+    print("Types ",type(pCenterz),type(pData),type(pHiddenMat))  
+
+    for i in range(len(pCenterz)):  # For each center
+       newCenters=[]
+       print("Now calculating Center:i ",i)
+       for j in range(len(pData)):  # For each datapoint 
+          print("Multply ", npHiddenMat[i][j], " by ", pData[j]," ",np.multiply(npHiddenMat[i,j],pData[j]))
+          tNumer=np.multiply(npHiddenMat[i,j],pData[j])
+          Numer.append(tNumer)
+       
+       joe=npHiddenMat[i]
+       joesArray=onesArrow(joe)
+       print("Divide ",Numer," by",joesArray)
+
+       npNumer=np.array(Numer)
+       npDenom=np.array(joesArray)
+       newCenters=np.divide(npNumer,npDenom) 
+
+    print("End Mstep")
+    return newCenters 
+
+
 def eStepNewton(Data,Centerz):
     hMatrix=[]
       
@@ -174,7 +204,13 @@ def addDist(A,B):
     return np.add(A,B)
 
 
+def onesArrow(anArray):
+    nanArray=np.array(anArray)
+    a = len(nanArray)
+    onesArray=np.ones(a)
+    rowSum=nanArray.dot(onesArray)
 
+    return rowSum 
 
 
 def readData(px):
@@ -278,9 +314,8 @@ def main():
         print("=========================")
         print(HiddenMatrix)
         print("=========================")
-        #xx=np.multiply(1,HiddenMatrix)
-        #print("Heres HiddenMatrix times 1")
-        #print(xx)
+        theanswer=Mstep(Centers,Data,HiddenMatrix)
+        print("Final Answer ",theanswer)
         exit()
         cntr1=0
         #for row in Center2PtDist
