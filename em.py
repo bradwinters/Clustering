@@ -23,27 +23,21 @@ def Mstep(pCenterz,pData,pHiddenMat):
     Numer=[]
     FinalAns=[]
 
-    print("Types ",type(pCenterz),type(pData),type(pHiddenMat))  
     npHiddenMat=np.array(pHiddenMat)
-    print("Types ",type(pCenterz),type(pData),type(pHiddenMat))  
 
     for i in range(len(pCenterz)):  # For each center
        newCenter=[]
-       print("Now calculating Center:i ",i)
 
        for j in range(len(pData)):  # For each datapoint 
-          print("Mult ", npHiddenMat[i][j], " by ", pData[j]," ",np.multiply(npHiddenMat[i,j],pData[j]))
           tNumer=np.multiply(npHiddenMat[i,j],pData[j])
           Numer.append(tNumer)
 
-          # Scalar HiddenMatrix x row j in Data created, sum it
-          #npNumer=np.array(Numer) 
-          #SumNumer=SumCols(npNumer)
-       print("Done with loop, heres numer added")
+       # Scalar HiddenMatrix x row j in Data created, sum it
+       #print("Done with loop, heres numer added")
        SumNumer=np.sum(Numer,axis=0)
-       print(SumNumer)
+       #print(SumNumer)
        Denomin=onesArrow(npHiddenMat[i])
-       print("Divide ",SumNumer," by",Denomin)
+       #print("Divide ",SumNumer," by",Denomin)
        newCenter=np.divide(SumNumer,Denomin) 
        FinalAns.append(newCenter) 
        Numer=[] # reset for next loop
@@ -51,7 +45,6 @@ def Mstep(pCenterz,pData,pHiddenMat):
     #npNumer=np.array(SumNumer)
     #npDenom=np.array(joesArray)
     #newCenters=np.divide(npNumer,npDenom) 
-    print("End Mstep")
     return FinalAns 
 
 
@@ -159,8 +152,8 @@ def eStepSM(Data,Centerz,BetaF):
        for j in Data:  # store it
           xy=-1.0*BetaF*Edist(i,j)
           Force=math.pow(math.e, xy)
-          print("sum of centers is ",np.sum(i))
-          print("Force is ",Force)
+          #print("sum of centers is ",np.sum(i))
+          #print("Force is ",Force)
           Denominator=np.multiply(np.sum(j),Force)
           
           fa=Force/Denominator
@@ -217,11 +210,8 @@ def SumCols(anArray):
     #onesArray=np.copy(anArray)
     #onesArray.fill(1)
     onesArray=np.ones(1)
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-    print("Sum Array Cols",anArray," times ",onesArray)
+    #print("Sum Array Cols",anArray," times ",onesArray)
     ColSum=np.multiply(anArray,onesArray),
-    print(" = ",ColSum)
-    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
      
     return ColSum 
 
@@ -229,10 +219,9 @@ def onesArrow(anArray):
     
     onesArray=np.copy(anArray)
     onesArray.fill(1)
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-    print("Multipy ",anArray," times ",onesArray)
+    #print("Multipy ",anArray," times ",onesArray)
     rowSum=anArray.dot(onesArray),
-    print(" = ",rowSum)
+    #print(" = ",rowSum)
      
     return rowSum 
 
@@ -312,75 +301,43 @@ def main():
     
     Done=False
     oldDistortion=50000
-    LoopCnt=0
+    LoopCnt=1
 
     print("K is ",Params.K," M is ",Params.M," Beta is ", Params.Beta)
     
-    while Done==False:
+    while LoopCnt <= 100:
         ############################################################
         #  Map centers to data pts, keep the distance as well
         #  Returns Array of 3 part tuple, (Center Array, DataPt Array and Dist)
         #  Centers to Clusters Phase
-        #  Guess at Parameters to determine Hidden Vector 
         # 
-        Center2PtDist=ClosestCenter(Data,Centers)
-        print("=========================")
-        print(Center2PtDist)
-        print("=========================")
-
         #Build HiddenMatrix as Sphere of influence: All Centers=>All DataPts
         #   E Step
         # Two ways
         # Pick eStep from Statistical Mechanics or Newtonian methods
         #
-        #HiddenMatrix=eStepSM(Data,Centers,Params.Beta)
-        HiddenMatrix=eStepNewton(Data,Centers)
+        HiddenMatrix=eStepSM(Data,Centers,Params.Beta)
+        #HiddenMatrix=eStepNewton(Data,Centers)
         print("=========================")
         print(HiddenMatrix)
         print("=========================")
         print("Starting M step, Centers, Data and HD dimensions are")
-        print(np.shape(Centers)," ",np.shape(Data)," ",np.shape(HiddenMatrix))
         theanswer=Mstep(Centers,Data,HiddenMatrix)
-        print("Final Answer ",theanswer)
-        exit()
-        cntr1=0
-        #for row in Center2PtDist
-        #   HiddenVector[cntr1]=
 
-        #
-        # extract tuples from the 3mer with additional index 
-        # where first [] is row, second is the tuple 1 of 3
-        #print(Center2PtDist[0][0],Center2PtDist[0][1],Center2PtDist[0][2])
-        #  will show row 0, tuples 1 to 3
-        ############################################################
-        #  Calculate Distortion for all clusters to determine continuation
+        print("After ",LoopCnt," iterations")
+        print("Centers replace with newCenters")
+        print("Types ",type(Centers)," <= ",type(theanswer)) 
+        print("Heres old centers")
+        print(Centers)
+        print("Heres the answer")
+        Centers=np.array(theanswer)
+        print(Centers)
 
-        Distortion=CalcDistortion(Center2PtDist)
-        
-        #########################################
-
-        print("Loop ",LoopCnt,"Distortion is is %5.3f " % (Distortion))
-        if Distortion >= oldDistortion:
-            Done=True
-        else:
-           oldDistortion=Distortion
-
-        ##########################################################
-        #Pick a new Center by gravity for each Center and its data pts
-        #  Clusters to Centers Phase
-        #  Use current HiddenVector to calculate Parameters 
-        ##########################################################
-
-        Centers=Clusters2Centers(Centers,Center2PtDist)
         LoopCnt+=1
 
         #  End Loop 
 
-        if LoopCnt > 50:
-           print("Exceeded 50 loops, increase or look for infinite loop. ",LoopCnt)
-           exit()
     print("*******Final Centers is ****")
-    print("Iterations = ",LoopCnt)
 
     Print2D(Centers)
          
