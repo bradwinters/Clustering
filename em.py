@@ -20,31 +20,39 @@ Soft Clusters to Centers (M-step): After data points have been assigned to soft 
 
 def Mstep(pCenterz,pData,pHiddenMat):
     print("Start Mstep")
-    #Numer = np.zeros((2), dtype=np.float)
     Numer=[]
+    FinalAns=[]
 
     print("Types ",type(pCenterz),type(pData),type(pHiddenMat))  
     npHiddenMat=np.array(pHiddenMat)
     print("Types ",type(pCenterz),type(pData),type(pHiddenMat))  
 
     for i in range(len(pCenterz)):  # For each center
-       newCenters=[]
+       newCenter=[]
        print("Now calculating Center:i ",i)
+
        for j in range(len(pData)):  # For each datapoint 
-          print("Multply ", npHiddenMat[i][j], " by ", pData[j]," ",np.multiply(npHiddenMat[i,j],pData[j]))
+          print("Mult ", npHiddenMat[i][j], " by ", pData[j]," ",np.multiply(npHiddenMat[i,j],pData[j]))
           tNumer=np.multiply(npHiddenMat[i,j],pData[j])
           Numer.append(tNumer)
-       
-       joe=npHiddenMat[i]
-       joesArray=onesArrow(joe)
-       print("Divide ",Numer," by",joesArray)
 
-       npNumer=np.array(Numer)
-       npDenom=np.array(joesArray)
-       newCenters=np.divide(npNumer,npDenom) 
+          # Scalar HiddenMatrix x row j in Data created, sum it
+          #npNumer=np.array(Numer) 
+          #SumNumer=SumCols(npNumer)
+       print("Done with loop, heres numer added")
+       SumNumer=np.sum(Numer,axis=0)
+       print(SumNumer)
+       Denomin=onesArrow(npHiddenMat[i])
+       print("Divide ",SumNumer," by",Denomin)
+       newCenter=np.divide(SumNumer,Denomin) 
+       FinalAns.append(newCenter) 
+       Numer=[] # reset for next loop
 
+    #npNumer=np.array(SumNumer)
+    #npDenom=np.array(joesArray)
+    #newCenters=np.divide(npNumer,npDenom) 
     print("End Mstep")
-    return newCenters 
+    return FinalAns 
 
 
 def eStepNewton(Data,Centerz):
@@ -204,12 +212,28 @@ def addDist(A,B):
     return np.add(A,B)
 
 
-def onesArrow(anArray):
-    nanArray=np.array(anArray)
-    a = len(nanArray)
-    onesArray=np.ones(a)
-    rowSum=nanArray.dot(onesArray)
+def SumCols(anArray):
+    
+    #onesArray=np.copy(anArray)
+    #onesArray.fill(1)
+    onesArray=np.ones(1)
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+    print("Sum Array Cols",anArray," times ",onesArray)
+    ColSum=np.multiply(anArray,onesArray),
+    print(" = ",ColSum)
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+     
+    return ColSum 
 
+def onesArrow(anArray):
+    
+    onesArray=np.copy(anArray)
+    onesArray.fill(1)
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    print("Multipy ",anArray," times ",onesArray)
+    rowSum=anArray.dot(onesArray),
+    print(" = ",rowSum)
+     
     return rowSum 
 
 
@@ -314,6 +338,8 @@ def main():
         print("=========================")
         print(HiddenMatrix)
         print("=========================")
+        print("Starting M step, Centers, Data and HD dimensions are")
+        print(np.shape(Centers)," ",np.shape(Data)," ",np.shape(HiddenMatrix))
         theanswer=Mstep(Centers,Data,HiddenMatrix)
         print("Final Answer ",theanswer)
         exit()
