@@ -18,6 +18,61 @@ Centers to Soft Clusters (E-step): After centers have been selected, assign each
 Soft Clusters to Centers (M-step): After data points have been assigned to soft clusters, compute new centers.
 '''
 
+def Mstep(pCenterz,pData,pHiddenMat):
+    Numer=[]
+    FinalAns=[]
+
+    npHiddenMat=np.array(pHiddenMat)
+
+    for i in range(len(pCenterz)):  # For each center
+       newCenter=[]
+
+       for j in range(len(pData)):  # For each datapoint 
+          tNumer=np.multiply(npHiddenMat[i,j],pData[j])
+          Numer.append(tNumer)
+
+       # Scalar HiddenMatrix x row j in Data created, sum it
+       #print("Done with loop, heres numer added")
+       SumNumer=np.sum(Numer,axis=0)
+       #print(SumNumer)
+       Denomin=onesArrow(npHiddenMat[i])
+       #print("Divide ",SumNumer," by",Denomin)
+       newCenter=np.divide(SumNumer,Denomin) 
+       FinalAns.append(newCenter) 
+       Numer=[] # reset for next loop
+
+    return FinalAns 
+
+
+def eStepNewton(Data,Centerz):
+    hMatrix=[]
+      
+    for i in Centerz:  # Calculate the distance from each point 
+       arow=[]
+       for j in Data:  # store it
+          ## Calculate Numerator
+          xy=Edist(i,j)  # distance from current Cnt to Dpt
+          xyz=xy**2      # square it here, not in the PF
+          if xyz <= 0.0:  # catch 0s
+              xyz=0.000000002
+          Numerator=1.0/xyz
+
+          # Do the same but for all centers
+          CNTRt=0.0
+          for Ctr in Centerz:
+             yy=Edist(Ctr,j)
+             yyy=yy**2
+             if yyy <= 0.0:
+                 yyy=0.000000002 
+             dForce=1.0/yyy
+             CNTRt+=dForce
+
+          fa= Numerator/CNTRt
+          arow.append(fa)
+       hMatrix.append(arow)
+
+    return hMatrix 
+
 class ParameterClass:
     K=0
     M=0
@@ -27,59 +82,6 @@ class CenterClass:
     CenterPos=[]
     Centerz=[]
 
-def Clusters2Centers(Centers,Cntr2Dist):
-    d={}
-    dc={}
-    DistN=0
-    Sumo=0
-    # Calculate Center of Gravity for each Center 
-    # tuple 0=center list, tuple 1 = data point list, tuple2=Distance
-    for row in Cntr2Dist:
-       DistN+=1
-       #print("Center=>",row[0],"Pt : ",row[1],"  Dist: %6.2f " % (row[2]))
-       if tuple(row[0]) not in d:
-           d[tuple(row[0])]=row[1]
-           dc[tuple(row[0])]=1
-       else:
-           d[tuple(row[0])]=addDist(d[tuple(row[0])],row[1])
-           dc[tuple(row[0])]+=1
-    #print("Center of Gravity for each Center is in Dictionary d")
-
-    for k,v in d.items():
-       N=dc[k]
-       newCenter=[]
-       for item in v:
-           newCenter.append(item/N)
-
-       Centers=delRow(Centers,k)
-       Centers = np.vstack((Centers,newCenter))
-    return Centers
-
-def CalcDistortion(Cntr2Dist):
-    d={}  ## Dictionary to accumulate Center to DataPt distance squared
-    dc={} ## Dictionary to accumulate Center to its DataPt counts 
-    DistN=0
-    Sumo=0
-    #tuple 0=centerlist, tuple 1=data point list, tuple 2 = Distance
-    for row in Cntr2Dist:
-       DistN+=1
-       #print("Center=>",row[0],"Pt : ",row[1],"  Dist: %6.2f " % (row[2]))
-       if tuple(row[0]) not in d:
-           d[tuple(row[0])]=math.pow(float(row[2]),2)
-           dc[tuple(row[0])]=1
-       else:
-           d[tuple(row[0])]+=math.pow(float(row[2]),2)
-           dc[tuple(row[0])]+=1
-
-    for row in d:
-        Sumo+=d[row]
-
-    #This needs to be stored, Distortion per center, here its just the last 
-
-    Distort=Sumo/DistN    
-
-    return Distort 
-
 def Print2D(Centers):
     niceCenter=[]
     for row in Centers:
@@ -87,44 +89,39 @@ def Print2D(Centers):
            print("%5.3f" % (element),end=" ") 
        print()
 
-def eStep(Data,Centerz,BetaF):
+def eStepSM(Data,Centerz,BetaF):
     hMatrix=[]
-    thisCenter=5.0
-      
+     
     for i in Centerz:  # Calculate the distance from each point 
-       arow=[]
+       arow=[] # re initialize each row of the HM, i.e. a centers pts
        for j in Data:  # store it
-          xy=-1.0*BetaF*Edist(i,j)
-          Force=math.pow(math.e, xy)
-          print("sum of centers is ",np.sum(i))
-          print("Force is ",Force)
-          Denominator=np.multiply(np.sum(j),Force)
-          
-          fa=Force/Denominator
-          arow.append(fa)
-          #partitionFunction()       
-       hMatrix.append(arow)
+          ##  First Calc Numerator 
+          xy=Edist(i,j)  # distance from current Cntr to Data Pt
+          if xy <= 0.0:  # trap to prevent 0 divides
+              xy=0.000000002
+          xyz=-1.0*BetaF*xy # add in the Beta Factor, 1 is like Newtonian
+    
+          Force=math.pow(math.e, xyz) # e to the power -B*Dist, numerator
+          #print("Numerator is ",Force)
+         
+          ##  Calc DeNominator 
+          # sum influences of all Centers on our data point 
+          CNTRt=0.0
+          for Ctr in Centerz:
+              yy=Edist(Ctr,j)
+              if yy <= 0.0:
+                  yy=0.000000002
+              yyz=-1.0*BetaF*yy
+              dForce=math.pow(math.e, yyz)
+              CNTRt+=dForce
+
+          # Finally compute the ratio of Ci to Dj over all Cs to Dj 
+          fa=Force/CNTRt
+          arow.append(fa)     #  add to this row for all Ds, the j loop 
+
+       hMatrix.append(arow)   # a row is done, start another row or end loop 
 
     return hMatrix 
-
-def ClosestCenter(Data,Centerz):
-    MaxD=-100.0
-    MinD=100000.0
-    bCntr=[]
-    thisCenter=5.0
-      
-    for i in Data:  #  find the closest center for each datapoint
-       for j in Centerz:  # store it
-            xy=Edist(i,j)
-            if xy < MinD :
-               MinD=xy
-               thisCenter=j
-           
-       #Datapoints assigned to center: Dist, Cnrt, data pt
-       #print("Decided  on ",MinD," Data to Center ",i,thisCenter)
-       bCntr.append((thisCenter,i,MinD))
-       MinD=100000.0  # reset
-    return bCntr 
 
 def delRow(Array2D,pattrn):
     mp=np.where(np.all(Array2D==pattrn,axis=1))
@@ -149,7 +146,25 @@ def addDist(A,B):
     return np.add(A,B)
 
 
+def SumCols(anArray):
+    
+    #onesArray=np.copy(anArray)
+    #onesArray.fill(1)
+    onesArray=np.ones(1)
+    #print("Sum Array Cols",anArray," times ",onesArray)
+    ColSum=np.multiply(anArray,onesArray),
+     
+    return ColSum 
 
+def onesArrow(anArray):
+    
+    onesArray=np.copy(anArray)
+    onesArray.fill(1)
+    #print("Multipy ",anArray," times ",onesArray)
+    rowSum=anArray.dot(onesArray),
+    #print(" = ",rowSum)
+     
+    return rowSum 
 
 
 def readData(px):
@@ -157,8 +172,9 @@ def readData(px):
     Open hardcoded file, parse data anticipataed but may change
     Load just data into a numpy array, 
     '''
-    f = open('wk2_1.dat', 'r')   #Smaller dataset 
-    #f = open('wk2_2.dat', 'r')  #Larger test dataset 
+    #f = open('wk2_1.dat', 'r')   #Smaller dataset 
+    f = open('wk2_2.dat', 'r')  #Larger test dataset 
+    #f = open('book.dat', 'r')   #Smaller dataset 
     cnt=0
     dataCnt=0
     Dataflag=False
@@ -196,7 +212,7 @@ def readData(px):
 
 
 def main():
-    ##Use a class for pointers to objects persist as they are passed by reference
+    ##Use a class so pointers to objects persist as they are passed by reference
     Params=ParameterClass()  
     Params.M=0
     Params.K=0
@@ -205,91 +221,56 @@ def main():
     Data= readData(Params) # load Data and Params from file
     ### remove phoney line 0 that established shape.  Find a better way later
     Data=np.delete(Data, 0, 0)
-    print("Data is ",Data)
+    #print("Data is ",Data)
 
     Centers = np.zeros((Params.M), dtype=np.float)
     print("Copy first K data points into Centers")
     Centers=copy.deepcopy(Data[:Params.K])
 
-    print("Cleaned Centers is ")
-    print(Centers)
-
-    print("Create parrallel array for centers label as integers by position")
-    
-    CCnt=(len(Centers))
-    print("Centers Count",CCnt)
-    CentersCnt=list(range(CCnt))     
-
-
-    #  Assign each data point to a position in HiddenVector, its center by numbr   
+    #print("Cleaned Centers is ")
+    #print(Centers)
 
     
-    Done=False
-    oldDistortion=50000
-    LoopCnt=0
+    LoopCnt=1
 
     print("K is ",Params.K," M is ",Params.M," Beta is ", Params.Beta)
-    
-    while Done==False:
+    #Params.Beta=1  # Test closest to Newtonian method via stat mechanics method 
+
+    while LoopCnt <= 100:
         ############################################################
         #  Map centers to data pts, keep the distance as well
         #  Returns Array of 3 part tuple, (Center Array, DataPt Array and Dist)
         #  Centers to Clusters Phase
-        #  Guess at Parameters to determine Hidden Vector 
         # 
-        Center2PtDist=ClosestCenter(Data,Centers)
-        print("=========================")
-        print(Center2PtDist)
-        print("=========================")
-
-        #Create HiddenMatrix
-        #   E Step
-        HiddenMatrix=eStep(Data,Centers,Params.Beta)
-        print("=========================")
-        print(HiddenMatrix)
-        print("=========================")
-        xx=np.multiply(1,HiddenMatrix)
-        print("Heres HiddenMatrix times 1")
-        print(xx)
-        exit()
-        cntr1=0
-        #for row in Center2PtDist
-        #   HiddenVector[cntr1]=
-
+        #Build HiddenMatrix as Sphere of influence: All Centers=>All DataPts
+        # (1)  E Step
+        # Two ways
+        # Pick eStep from Statistical Mechanics or Newtonian methods
         #
-        # extract tuples from the 3mer with additional index 
-        # where first [] is row, second is the tuple 1 of 3
-        #print(Center2PtDist[0][0],Center2PtDist[0][1],Center2PtDist[0][2])
-        #  will show row 0, tuples 1 to 3
-        ############################################################
-        #  Calculate Distortion for all clusters to determine continuation
 
-        Distortion=CalcDistortion(Center2PtDist)
+        HiddenMatrix=eStepSM(Data,Centers,Params.Beta)
         
-        #########################################
+        #HiddenMatrix=eStepNewton(Data,Centers)
 
-        print("Loop ",LoopCnt,"Distortion is is %5.3f " % (Distortion))
-        if Distortion >= oldDistortion:
-            Done=True
-        else:
-           oldDistortion=Distortion
+        #for m in HiddenMatrix:
+        #   for n in m:
+        #      print("%5.3f" % (n),end=" ") 
+        #   print()
 
-        ##########################################################
-        #Pick a new Center by gravity for each Center and its data pts
-        #  Clusters to Centers Phase
-        #  Use current HiddenVector to calculate Parameters 
-        ##########################################################
 
-        Centers=Clusters2Centers(Centers,Center2PtDist)
+        # (1)  M Step
+        #print("Starting M step, Centers, Data and HD dimensions are")
+
+        theanswer=Mstep(Centers,Data,HiddenMatrix)
+
+        Centers=np.array(theanswer)
+        #print(Centers)
+       
         LoopCnt+=1
-
+        print("Loop Count ",LoopCnt)
         #  End Loop 
 
-        if LoopCnt > 50:
-           print("Exceeded 50 loops, increase or look for infinite loop. ",LoopCnt)
-           exit()
     print("*******Final Centers is ****")
-    print("Iterations = ",LoopCnt)
 
     Print2D(Centers)
          
