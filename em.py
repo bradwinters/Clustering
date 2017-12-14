@@ -19,7 +19,6 @@ Soft Clusters to Centers (M-step): After data points have been assigned to soft 
 '''
 
 def Mstep(pCenterz,pData,pHiddenMat):
-    print("Start Mstep")
     Numer=[]
     FinalAns=[]
 
@@ -42,9 +41,6 @@ def Mstep(pCenterz,pData,pHiddenMat):
        FinalAns.append(newCenter) 
        Numer=[] # reset for next loop
 
-    #npNumer=np.array(SumNumer)
-    #npDenom=np.array(joesArray)
-    #newCenters=np.divide(npNumer,npDenom) 
     return FinalAns 
 
 
@@ -54,26 +50,24 @@ def eStepNewton(Data,Centerz):
     for i in Centerz:  # Calculate the distance from each point 
        arow=[]
        for j in Data:  # store it
+          ## Calculate Numerator
           xy=Edist(i,j)  # distance from current Cnt to Dpt
-          xyz=xy**2
-          if xyz <= 0.0:
+          xyz=xy**2      # square it here, not in the PF
+          if xyz <= 0.0:  # catch 0s
               xyz=0.000000002
           Numerator=1.0/xyz
 
           # Do the same but for all centers
-          fDenominator=0.0
-          for ss in Centerz:
-             ts=Edist(ss,j)
-             fDenominator+=ts
-          zz=Edist(Centerz,j)
-          xzz=zz**2
-          if zz <= 0.0:
-             zz=0.000000002
-          Denominator=fDenominator*1.0/xyz
-          
-          print("Denominator is ",Denominator)
+          CNTRt=0.0
+          for Ctr in Centerz:
+             yy=Edist(Ctr,j)
+             yyy=yy**2
+             if yyy <= 0.0:
+                 yyy=0.000000002 
+             dForce=1.0/yyy
+             CNTRt+=dForce
 
-          fa= Numerator/Denominator
+          fa= Numerator/CNTRt
           arow.append(fa)
        hMatrix.append(arow)
 
@@ -98,7 +92,6 @@ def Print2D(Centers):
 def eStepSM(Data,Centerz,BetaF):
     hMatrix=[]
      
-    print("Walmart==========================================") 
     for i in Centerz:  # Calculate the distance from each point 
        arow=[] # re initialize each row of the HM, i.e. a centers pts
        for j in Data:  # store it
@@ -128,7 +121,6 @@ def eStepSM(Data,Centerz,BetaF):
 
        hMatrix.append(arow)   # a row is done, start another row or end loop 
 
-    print("Home Depot ==========================================") 
     return hMatrix 
 
 def delRow(Array2D,pattrn):
@@ -180,8 +172,8 @@ def readData(px):
     Open hardcoded file, parse data anticipataed but may change
     Load just data into a numpy array, 
     '''
-    f = open('wk2_1.dat', 'r')   #Smaller dataset 
-    #f = open('wk2_2.dat', 'r')  #Larger test dataset 
+    #f = open('wk2_1.dat', 'r')   #Smaller dataset 
+    f = open('wk2_2.dat', 'r')  #Larger test dataset 
     #f = open('book.dat', 'r')   #Smaller dataset 
     cnt=0
     dataCnt=0
@@ -229,14 +221,14 @@ def main():
     Data= readData(Params) # load Data and Params from file
     ### remove phoney line 0 that established shape.  Find a better way later
     Data=np.delete(Data, 0, 0)
-    print("Data is ",Data)
+    #print("Data is ",Data)
 
     Centers = np.zeros((Params.M), dtype=np.float)
     print("Copy first K data points into Centers")
     Centers=copy.deepcopy(Data[:Params.K])
 
-    print("Cleaned Centers is ")
-    print(Centers)
+    #print("Cleaned Centers is ")
+    #print(Centers)
 
     
     LoopCnt=1
@@ -257,30 +249,25 @@ def main():
         #
 
         HiddenMatrix=eStepSM(Data,Centers,Params.Beta)
-        for m in HiddenMatrix:
-           for n in m:
-              print("%5.3f" % (n),end=" ") 
-           print()
         
         #HiddenMatrix=eStepNewton(Data,Centers)
-        #print("=========================")
-        #print(HiddenMatrix)
-        #print("=========================")
+
+        #for m in HiddenMatrix:
+        #   for n in m:
+        #      print("%5.3f" % (n),end=" ") 
+        #   print()
+
+
         # (1)  M Step
-        print("Starting M step, Centers, Data and HD dimensions are")
+        #print("Starting M step, Centers, Data and HD dimensions are")
 
         theanswer=Mstep(Centers,Data,HiddenMatrix)
 
-        print("After ",LoopCnt," iterations")
-        print("Centers replace with newCenters")
-        print("Heres old centers")
-        print(Centers)
-        print("Heres the new Centers")
         Centers=np.array(theanswer)
-        print(Centers)
-
+        #print(Centers)
+       
         LoopCnt+=1
-
+        print("Loop Count ",LoopCnt)
         #  End Loop 
 
     print("*******Final Centers is ****")
