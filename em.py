@@ -54,18 +54,23 @@ def eStepNewton(Data,Centerz):
     for i in Centerz:  # Calculate the distance from each point 
        arow=[]
        for j in Data:  # store it
-          xy=Edist(i,j)
-          print("Distance d from ",i," to ",j," is ",xy)
-          if xy == 0.0:
-              xy=0.002
-          Numerator=1.0/xy
-          print("1 over d is ",Numerator)
+          xy=Edist(i,j)  # distance from current Cnt to Dpt
+          xyz=xy**2
+          if xyz <= 0.0:
+              xyz=0.000000002
+          Numerator=1.0/xyz
 
           # Do the same but for all centers
-          Denominator=0.0
+          fDenominator=0.0
           for ss in Centerz:
              ts=Edist(ss,j)
-             Denominator+=ts
+             fDenominator+=ts
+          zz=Edist(Centerz,j)
+          xzz=zz**2
+          if zz <= 0.0:
+             zz=0.000000002
+          Denominator=fDenominator*1.0/xyz
+          
           print("Denominator is ",Denominator)
 
           fa= Numerator/Denominator
@@ -83,59 +88,6 @@ class CenterClass:
     CenterPos=[]
     Centerz=[]
 
-def Clusters2Centers(Centers,Cntr2Dist):
-    d={}
-    dc={}
-    DistN=0
-    Sumo=0
-    # Calculate Center of Gravity for each Center 
-    # tuple 0=center list, tuple 1 = data point list, tuple2=Distance
-    for row in Cntr2Dist:
-       DistN+=1
-       #print("Center=>",row[0],"Pt : ",row[1],"  Dist: %6.2f " % (row[2]))
-       if tuple(row[0]) not in d:
-           d[tuple(row[0])]=row[1]
-           dc[tuple(row[0])]=1
-       else:
-           d[tuple(row[0])]=addDist(d[tuple(row[0])],row[1])
-           dc[tuple(row[0])]+=1
-    #print("Center of Gravity for each Center is in Dictionary d")
-
-    for k,v in d.items():
-       N=dc[k]
-       newCenter=[]
-       for item in v:
-           newCenter.append(item/N)
-
-       Centers=delRow(Centers,k)
-       Centers = np.vstack((Centers,newCenter))
-    return Centers
-
-def CalcDistortion(Cntr2Dist):
-    d={}  ## Dictionary to accumulate Center to DataPt distance squared
-    dc={} ## Dictionary to accumulate Center to its DataPt counts 
-    DistN=0
-    Sumo=0
-    #tuple 0=centerlist, tuple 1=data point list, tuple 2 = Distance
-    for row in Cntr2Dist:
-       DistN+=1
-       #print("Center=>",row[0],"Pt : ",row[1],"  Dist: %6.2f " % (row[2]))
-       if tuple(row[0]) not in d:
-           d[tuple(row[0])]=math.pow(float(row[2]),2)
-           dc[tuple(row[0])]=1
-       else:
-           d[tuple(row[0])]+=math.pow(float(row[2]),2)
-           dc[tuple(row[0])]+=1
-
-    for row in d:
-        Sumo+=d[row]
-
-    #This needs to be stored, Distortion per center, here its just the last 
-
-    Distort=Sumo/DistN    
-
-    return Distort 
-
 def Print2D(Centers):
     niceCenter=[]
     for row in Centers:
@@ -145,42 +97,39 @@ def Print2D(Centers):
 
 def eStepSM(Data,Centerz,BetaF):
     hMatrix=[]
-    thisCenter=5.0
-      
+     
+    print("Walmart==========================================") 
     for i in Centerz:  # Calculate the distance from each point 
-       arow=[]
+       arow=[] # re initialize each row of the HM, i.e. a centers pts
        for j in Data:  # store it
-          xy=-1.0*BetaF*Edist(i,j)
-          Force=math.pow(math.e, xy)
-          #print("sum of centers is ",np.sum(i))
-          #print("Force is ",Force)
-          Denominator=np.multiply(np.sum(j),Force)
-          
-          fa=Force/Denominator
-          arow.append(fa)
-          #partitionFunction()       
-       hMatrix.append(arow)
+          ##  First Calc Numerator 
+          xy=Edist(i,j)  # distance from current Cntr to Data Pt
+          if xy <= 0.0:  # trap to prevent 0 divides
+              xy=0.000000002
+          xyz=-1.0*BetaF*xy # add in the Beta Factor, 1 is like Newtonian
+    
+          Force=math.pow(math.e, xyz) # e to the power -B*Dist, numerator
+          #print("Numerator is ",Force)
+         
+          ##  Calc DeNominator 
+          # sum influences of all Centers on our data point 
+          CNTRt=0.0
+          for Ctr in Centerz:
+              yy=Edist(Ctr,j)
+              if yy <= 0.0:
+                  yy=0.000000002
+              yyz=-1.0*BetaF*yy
+              dForce=math.pow(math.e, yyz)
+              CNTRt+=dForce
 
+          # Finally compute the ratio of Ci to Dj over all Cs to Dj 
+          fa=Force/CNTRt
+          arow.append(fa)     #  add to this row for all Ds, the j loop 
+
+       hMatrix.append(arow)   # a row is done, start another row or end loop 
+
+    print("Home Depot ==========================================") 
     return hMatrix 
-
-def ClosestCenter(Data,Centerz):
-    MaxD=-100.0
-    MinD=100000.0
-    bCntr=[]
-    thisCenter=5.0
-      
-    for i in Data:  #  find the closest center for each datapoint
-       for j in Centerz:  # store it
-            xy=Edist(i,j)
-            if xy < MinD :
-               MinD=xy
-               thisCenter=j
-           
-       #Datapoints assigned to center: Dist, Cnrt, data pt
-       #print("Decided  on ",MinD," Data to Center ",i,thisCenter)
-       bCntr.append((thisCenter,i,MinD))
-       MinD=100000.0  # reset
-    return bCntr 
 
 def delRow(Array2D,pattrn):
     mp=np.where(np.all(Array2D==pattrn,axis=1))
@@ -231,9 +180,9 @@ def readData(px):
     Open hardcoded file, parse data anticipataed but may change
     Load just data into a numpy array, 
     '''
-    #f = open('wk2_1.dat', 'r')   #Smaller dataset 
+    f = open('wk2_1.dat', 'r')   #Smaller dataset 
     #f = open('wk2_2.dat', 'r')  #Larger test dataset 
-    f = open('book.dat', 'r')   #Smaller dataset 
+    #f = open('book.dat', 'r')   #Smaller dataset 
     cnt=0
     dataCnt=0
     Dataflag=False
@@ -271,7 +220,7 @@ def readData(px):
 
 
 def main():
-    ##Use a class for pointers to objects persist as they are passed by reference
+    ##Use a class so pointers to objects persist as they are passed by reference
     Params=ParameterClass()  
     Params.M=0
     Params.K=0
@@ -289,22 +238,12 @@ def main():
     print("Cleaned Centers is ")
     print(Centers)
 
-    print("Create parrallel array for centers label as integers by position")
     
-    CCnt=(len(Centers))
-    print("Centers Count",CCnt)
-    CentersCnt=list(range(CCnt))     
-
-
-    #  Assign each data point to a position in HiddenVector, its center by numbr   
-
-    
-    Done=False
-    oldDistortion=50000
     LoopCnt=1
 
     print("K is ",Params.K," M is ",Params.M," Beta is ", Params.Beta)
-    
+    #Params.Beta=1  # Test closest to Newtonian method via stat mechanics method 
+
     while LoopCnt <= 100:
         ############################################################
         #  Map centers to data pts, keep the distance as well
@@ -312,24 +251,31 @@ def main():
         #  Centers to Clusters Phase
         # 
         #Build HiddenMatrix as Sphere of influence: All Centers=>All DataPts
-        #   E Step
+        # (1)  E Step
         # Two ways
         # Pick eStep from Statistical Mechanics or Newtonian methods
         #
+
         HiddenMatrix=eStepSM(Data,Centers,Params.Beta)
+        for m in HiddenMatrix:
+           for n in m:
+              print("%5.3f" % (n),end=" ") 
+           print()
+        
         #HiddenMatrix=eStepNewton(Data,Centers)
-        print("=========================")
-        print(HiddenMatrix)
-        print("=========================")
+        #print("=========================")
+        #print(HiddenMatrix)
+        #print("=========================")
+        # (1)  M Step
         print("Starting M step, Centers, Data and HD dimensions are")
+
         theanswer=Mstep(Centers,Data,HiddenMatrix)
 
         print("After ",LoopCnt," iterations")
         print("Centers replace with newCenters")
-        print("Types ",type(Centers)," <= ",type(theanswer)) 
         print("Heres old centers")
         print(Centers)
-        print("Heres the answer")
+        print("Heres the new Centers")
         Centers=np.array(theanswer)
         print(Centers)
 
