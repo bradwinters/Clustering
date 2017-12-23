@@ -5,7 +5,7 @@ from random import randint
 '''
 '''
 
-def AveDist(row1,row2,Width,tCntrs):
+def AveDist(row1,row2,Width,tCntrs,r,c):
 
     AvgdRow=[] 
     wtVector=[]
@@ -17,12 +17,21 @@ def AveDist(row1,row2,Width,tCntrs):
        facter=tCntrs[jj].count('_') 
        wtVector.append(facter+1)
     print(wtVector)
+
+    print("Given ",r," and ",c)
+    print("Wts are ")
+    Wt1=wtVector[r]
+    Wt2=wtVector[c]
+    print("Wt1 ",Wt1," and Wt2:",Wt2)
+
+
     for pt in range(Width): 
        if (row1[pt]==0.0 or row2[pt] == 0.0):
           element=0 
        else:
-          element=(row1[pt]*Wt1)+(row2[pt]*Wt2)/(Wt1+Wt2)
-      
+          element=((row1[pt]*Wt1)+(row2[pt]*Wt2))/(Wt1+Wt2)
+          telement=row1[pt]+row2[pt]/2
+          
        AvgdRow.append(element)
     print("New row is ",AvgdRow)
     return AvgdRow
@@ -166,6 +175,7 @@ def main():
 
     while len(trackCenters) > 1:
         print("*** Top of the loop   *****")
+        print(npData)
         print("TrackCenters is ")
         print(trackCenters)
         print("centerLookup is ")
@@ -187,7 +197,7 @@ def main():
         ##############
         
         w=len(npData[0])
-        aveArray=AveDist(npData[Row],npData[Col],w,centerLookup)
+        aveArray=AveDist(npData[Row],npData[Col],w,centerLookup,Row,Col)
         
         NewRow=np.array(aveArray)
 
