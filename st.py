@@ -8,6 +8,7 @@ from random import randint
 def AveDist(row1,row2,Width,tCntrs,r,c):
 
     AvgdRow=[] 
+    tAvgdRow=[] 
     wtVector=[]
     Wt1=1.0
     Wt2=1.0
@@ -17,12 +18,15 @@ def AveDist(row1,row2,Width,tCntrs,r,c):
        facter=tCntrs[jj].count('_') 
        wtVector.append(facter+1)
     print(wtVector)
+    print(tCntrs)
 
-    print("Given ",r," and ",c)
-    print("Wts are ")
+    print("Given row and column ",r," and ",c)
     Wt1=wtVector[r]
     Wt2=wtVector[c]
-    print("Wt1 ",Wt1," and Wt2:",Wt2)
+
+    print("Wts are ")
+    print(tCntrs[r],"has Wt1 ",Wt1)
+    print(tCntrs[c],"has Wt2:",Wt2)
 
 
     for pt in range(Width): 
@@ -30,10 +34,12 @@ def AveDist(row1,row2,Width,tCntrs,r,c):
           element=0 
        else:
           element=((row1[pt]*Wt1)+(row2[pt]*Wt2))/(Wt1+Wt2)
-          telement=row1[pt]+row2[pt]/2
-          
+          print(row1[pt],"*",Wt1," plus ",row2[pt],"*",Wt2," / ",Wt1,"+",Wt2,"=",element)
+           
+          telement=((row1[pt])+(row2[pt]))/(Wt1*Wt2)
+          print(row1[pt]," plus ",row2[pt]," / ",Wt1,"*",Wt2,"=",telement)
        AvgdRow.append(element)
-    print("New row is ",AvgdRow)
+    print("just computed ",AvgdRow)
     return AvgdRow
 
 def WAve(Row,Col,Data):
@@ -109,8 +115,10 @@ def readData():
     '''
     #f = open('book.dat', 'r')   #Smaller dataset 
     #f = open('wk2_2.dat', 'r')  #Larger test dataset 
-    f = open('data1.dat', 'r')   #Smaller dataset 
-    #f = open('data2.dat', 'r')   #Smaller dataset 
+    #f = open('data1.dat', 'r')   #Smaller dataset 
+    f = open('data2.dat', 'r')   #Smaller dataset 
+    #f = open('youtube.dat', 'r')   #Smaller dataset 
+    #f = open('test.dat', 'r')   # use on test after renaming weird names 
     cnt=0
     dataCnt=0
     clist=[] # list of centers, initially one per data point
@@ -189,7 +197,7 @@ def main():
         SmallV, Pos = MinPos(npData) 
         Row=int(Pos[0])
         Col=int(Pos[1])
-        
+        print("&&&  Smallest value is now ",SmallV) 
         ####
         #3 #
         ##################################################
@@ -211,8 +219,21 @@ def main():
         ## create new point string, Cnew
         c1=centerLookup[Row]
         c2=centerLookup[Col]
+        Coalest1=0
+        Coalest2=0
+        Coalest1=c1.count('_')
+        Coalest2=c2.count('_')
+        print("C1 is ",c1)
+        print("Cf1 is ",Coalest1)
+        print("C2 is ",c2)
+        print("Cf2 is ",Coalest2)
 
-        Cnew=c1+'_'+c2
+        if Coalest1==0 and Coalest2==0: 
+            Cnew=c1+'_'+c2
+        elif Coalest2 >= Coalest1:
+            Cnew=c1+'_'+c2
+        else:
+            Cnew=c2+'_'+c1
 
         answer.append(Cnew) 
         cRow=str(Row) 
@@ -289,12 +310,25 @@ def main():
       
 
     print("Done ")
+    for line in answer:
+        out=line.split('_')
+        outline=""
+        for o in out:
+            oo=int(o)+1
+            outline+=str(oo)+" "
+            
+        print(outline[:-1])
+
+    f = open("answer.dat","w")
     for pair in answer:
+        aline=""
         p=pair.split('_')
         for j in p:
             ii=int(j)+1
-            print(ii,end=" ")
-        print()
+            aline+=(str(ii)+" ")
+        f.write(str(aline))
+        f.write("\n")
+    f.close()
 
     #for pair in answer:
     #    p=pair.split('_')
